@@ -2,351 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Armar Equipos Parejos</title>
   <meta name="theme-color" content="#10b981" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <style>
-    :root{--bg:#f5f7f8;--fg:#0f172a;--muted:#64748b;--pri:#10b981;--card:#fff;--bd:#e5e7eb}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoi UI,Roboto,Ubuntu; background:var(--bg); color:var(--fg)}
-    header{position:sticky;top:0;background:var(--bg);padding:12px 16px;display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd);z-index:10}
-    h1{font-size:20px;margin:0;font-weight:700}
-    .tabs{display:flex;gap:8px}
-    .btn{appearance:none;border:1px solid var(--bd);background:#fff;color:#111;padding:10px 14px;border-radius:14px;font-weight:600}
-    .btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
-    .btn.dng{color:#b91c1c;border-color:#fecaca;background:#fff}
-    .btn.full{width:100%}
-    .wrap{max-width:920px;margin:0 auto;padding:16px}
-    .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:14px}
-    .row:hover{background:#f9fafb}
-    .badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#f1f5f9;font-size:12px;margin:2px 4px 2px 0}
-    .list{display:grid;gap:8px}
-    label.block{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
-    input, select{padding:12px;border:1px solid var(--bd);border-radius:12px;font-size:16px;width:100%;background:white}
-    .grid{display:grid;gap:12px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .flex{display:flex;gap:8px;align-items:center}
-    .right{justify-content:flex-end}
-    .muted{color:var(--muted)}
-    .team{padding:12px}
-    .team h3{margin:0 0 8px 0;font-size:16px}
-    .stat{display:flex;flex-direction:column;align-items:center;padding:6px 10px;border-radius:12px;background:#f8fafc}
-    .sticky-actions{position:sticky;bottom:0;background:var(--bg);padding:12px 0}
-    .small{font-size:12px}
-    .footer{padding:6px 0 20px;text-align:center;font-size:11px;color:#94a3b8}
-    @media (max-width:640px){
-      .row{grid-template-columns:1fr;align-items:start}
-      header h1{font-size:18px}
-    }
-  </style>
 </head>
 <body>
-  <header>
-    <h1>⚽ Armar Equipos Parejos</h1>
-    <div class="tabs">
-      <button class="btn" data-tab="jug">Jugadores</button>
-      <button class="btn" data-tab="par">Próximo partido</button>
-      <button class="btn" data-tab="bak">Backup</button>
-    </div>
-  </header>
-  <div class="wrap">
+  <h1>⚽ Armar Equipos Parejos</h1>
+  <button id="addBtn">+ Agregar jugador</button>
+  <button id="exampleBtn">Cargar ejemplo</button>
+  <div id="playersList"></div>
 
-    <!-- Jugadores -->
-    <section id="tab-jug" class="grid">
-      <div class="flex right">
-        <button class="btn pri" id="addBtn">+ Agregar</button>
-        <button class="btn" id="exampleBtn">Cargar ejemplo</button>
-      </div>
-      <div class="card" style="padding:12px">
-        <div id="playersList" class="list"></div>
-        <div class="muted small" id="emptyHint">Agregá jugadores para empezar.</div>
-      </div>
-    </section>
-
-    <!-- Partido -->
-    <section id="tab-par" class="grid" style="display:none">
-      <div class="card" style="padding:12px">
-        <div class="grid3">
-          <label class="block"><span>Tamaño (vs)</span>
-            <select id="sizeSel">
-              <option value="5">5 vs 5</option>
-              <option value="6">6 vs 6</option>
-              <option value="7">7 vs 7</option>
-            </select>
-          </label>
-          <div class="block"><span class="muted">Seleccionados</span>
-            <div class="flex"><b id="selCount">0</b>/<span id="selNeed">10</span></div>
-          </div>
-          <div class="block"><span class="muted">Acciones</span>
-            <div class="flex">
-              <button class="btn" id="clearTeams">Limpiar</button>
-              <button class="btn pri" id="makeTeams">Armar 2 equipos</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="padding:12px">
-        <div id="selectList" class="list"></div>
-      </div>
-      <div id="result" class="grid" style="display:none">
-        <div class="card team" id="teamA"></div>
-        <div class="card team" id="teamB"></div>
-        <div class="muted small">Costo de desequilibrio: <b id="cost"></b> (menor es mejor)</div>
-      </div>
-    </section>
-
-    <!-- Backup -->
-    <section id="tab-bak" class="grid" style="display:none">
-      <div class="card" style="padding:12px">
-        <div class="grid2">
-          <button class="btn" id="exportBtn">Exportar JSON</button>
-          <label class="btn" style="cursor:pointer">Importar JSON<input type="file" id="importInp" accept="application/json" hidden></label>
-        </div>
-      </div>
-      <div class="footer">Hecho con ❤ para armar picaditos justos. Guarda en tu dispositivo (localStorage).</div>
-    </section>
-
-  </div>
-
-  <!-- Modal -->
-  <dialog id="dlg" style="max-width:560px;width:92%;border:none;border-radius:20px;padding:0;">
+  <dialog id="dlg">
     <form id="playerForm" method="dialog">
-      <div class="card" style="border:none;border-radius:20px">
-        <div style="padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:700">Jugador</div>
-          <button class="btn" value="cancel">✕</button>
-        </div>
-        <div style="padding:16px" class="grid">
-          <label class="block"><span>Nombre</span><input id="f_nombre" required placeholder="Ej. Nico"></label>
-          <div class="grid3">
-            <label class="block"><span>Overall (1-10)</span><input type="number" id="f_overall" min="1" max="10" value="6"></label>
-            <label class="block"><span>Ataque (1-10)</span><input type="number" id="f_ataque" min="1" max="10" value="6"></label>
-            <label class="block"><span>Defensa (1-10)</span><input type="number" id="f_defensa" min="1" max="10" value="6"></label>
-          </div>
-          <div class="grid3">
-            <label class="block"><span>Arquero (0-10)</span><input type="number" id="f_arquero" min="0" max="10" value="3"></label>
-            <label class="block"><span>Resistencia (1-10)</span><input type="number" id="f_resistencia" min="1" max="10" value="6"></label>
-            <label class="block"><span>Pie</span>
-              <select id="f_pie"><option>Derecho</option><option>Izquierdo</option><option>Ambidiestro</option></select>
-            </label>
-          </div>
-          <label class="block"><span>Posición preferida</span>
-            <select id="f_pos"><option value="ARQ">Arquero</option><option value="DEF">Defensa</option><option value="MED">Mediocampo</option><option value="DEL">Delantero</option></select>
-          </label>
-        </div>
-        <div class="sticky-actions" style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn" value="cancel">Cancelar</button>
-          <button class="btn pri" id="saveBtn" value="default">Guardar</button>
-        </div>
-      </div>
+      <label>Nombre <input id="f_nombre" required></label><br>
+      <label>Ataque <input type="number" id="f_ataque" min="1" max="10" value="6"></label><br>
+      <label>Defensa <input type="number" id="f_defensa" min="1" max="10" value="6"></label><br>
+      <label>Arquero <input type="number" id="f_arquero" min="0" max="10" value="3"></label><br>
+      <label>Resistencia <input type="number" id="f_resistencia" min="1" max="10" value="6"></label><br>
+      <label>Overall (auto) <input type="number" id="f_overall" readonly disabled></label><br>
+      <button value="cancel">Cancelar</button>
+      <button id="saveBtn" value="default">Guardar</button>
     </form>
   </dialog>
 
-  <script>
-    // --- Estado & util ---
-    const KEY='equipo_balanceado_html_v1';
-    const PREF='equipo_balanceado_prefs_v1';
-    const $=sel=>document.querySelector(sel);
-    const $$=sel=>Array.from(document.querySelectorAll(sel));
-    const clamp=(n,min,max)=>Math.max(min,Math.min(max,Number(n)||0));
-    const empty=()=>({id:crypto.randomUUID(),nombre:'',overall:6,ataque:6,defensa:6,arquero:3,resistencia:6,pie:'Derecho',posicion:'MED'});
+<script>
+const KEY='equipos_auto_v1';
+const $=s=>document.querySelector(s);
+let players=JSON.parse(localStorage.getItem(KEY)||'[]');
+const save=()=>localStorage.setItem(KEY,JSON.stringify(players));
+const computeOverall=p=>Math.round(((+p.ataque+(+p.defensa)+(+p.arquero)+(+p.resistencia))/4)*10)/10;
+const recomputeAll=()=>{players=players.map(p=>({...p,overall:computeOverall(p)}));save();};
 
-    let players = JSON.parse(localStorage.getItem(KEY)||'[]');
-    let prefs = JSON.parse(localStorage.getItem(PREF)||'{"size":5,"selected":[]}');
+let editing=null;
+function renderPlayers(){ $('#playersList').innerHTML=players.map(p=>`<div><b>${p.nombre}</b> (Ovr ${p.overall})</div>`).join(''); }
+function openForm(p){
+  editing=p?{...p}:{id:crypto.randomUUID(),nombre:'',ataque:6,defensa:6,arquero:3,resistencia:6,overall:6};
+  $('#f_nombre').value=editing.nombre;
+  $('#f_ataque').value=editing.ataque;
+  $('#f_defensa').value=editing.defensa;
+  $('#f_arquero').value=editing.arquero;
+  $('#f_resistencia').value=editing.resistencia;
+  const recalc=()=>{
+    const tmp={ataque:$('#f_ataque').value,defensa:$('#f_defensa').value,arquero:$('#f_arquero').value,resistencia:$('#f_resistencia').value};
+    $('#f_overall').value=computeOverall(tmp);
+  };
+  ['#f_ataque','#f_defensa','#f_arquero','#f_resistencia'].forEach(sel=>$(sel).oninput=recalc);
+  recalc();
+  $('#dlg').showModal();
+}
+$('#addBtn').onclick=()=>openForm(null);
+$('#saveBtn').onclick=e=>{e.preventDefault();editing.nombre=$('#f_nombre').value;
+editing.ataque=+$('#f_ataque').value;editing.defensa=+$('#f_defensa').value;editing.arquero=+$('#f_arquero').value;editing.resistencia=+$('#f_resistencia').value;
+editing.overall=computeOverall(editing);const i=players.findIndex(x=>x.id===editing.id);if(i>=0)players[i]=editing;else players.push(editing);save();renderPlayers();$('#dlg').close();};
+$('#exampleBtn').onclick=()=>{players=[{id:crypto.randomUUID(),nombre:'Nico',ataque:7,defensa:6,arquero:2,resistencia:7},{id:crypto.randomUUID(),nombre:'Ari',ataque:6,defensa:5,arquero:1,resistencia:6},{id:crypto.randomUUID(),nombre:'Lucho',ataque:6,defensa:7,arquero:2,resistencia:6}];recomputeAll();renderPlayers();};
+recomputeAll();renderPlayers();
+</script>
 
-    const save=()=>{localStorage.setItem(KEY,JSON.stringify(players));};
-    const savePrefs=()=>{localStorage.setItem(PREF,JSON.stringify(prefs));};
-
-    // --- Tabs ---
-    const showTab = (id)=>{
-      $('#tab-jug').style.display = id==='jug'?'grid':'none';
-      $('#tab-par').style.display = id==='par'?'grid':'none';
-      $('#tab-bak').style.display = id==='bak'?'grid':'none';
-      $$('.tabs .btn').forEach(b=>b.classList.toggle('pri', b.dataset.tab===id));
-    };
-    $$('.tabs .btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
-
-    // --- Render jugadores ---
-    function renderPlayers(){
-      const list=$('#playersList');
-      list.innerHTML='';
-      $('#emptyHint').style.display = players.length? 'none':'block';
-      players.forEach(p=>{
-        const row=document.createElement('div');
-        row.className='row';
-        row.innerHTML=`
-          <div class="col-span-4" style="font-weight:600">${p.nombre}</div>
-          <div class="col-span-5">
-            <span class="badge">Ovr ${p.overall}</span>
-            <span class="badge">Atq ${p.ataque}</span>
-            <span class="badge">Def ${p.defensa}</span>
-            <span class="badge">ARQ ${p.arquero}</span>
-            <span class="badge">Res ${p.resistencia}</span>
-            <span class="badge">${p.pie}</span>
-            <span class="badge">${p.posicion}</span>
-          </div>
-          <div class="col-span-3 flex right">
-            <button class="btn" data-act="edit">Editar</button>
-            <button class="btn dng" data-act="del">Borrar</button>
-          </div>`;
-        row.querySelector('[data-act="edit"]').onclick=()=>openForm(p);
-        row.querySelector('[data-act="del"]').onclick=()=>{ if(confirm('¿Borrar a '+p.nombre+'?')){ players=players.filter(x=>x.id!==p.id); save(); syncSelected(); renderAll(); } };
-        list.appendChild(row);
-      });
-    }
-
-    // --- Render selección para partido ---
-    function renderSelect(){
-      $('#sizeSel').value = prefs.size || 5;
-      const need=prefs.size*2; $('#selNeed').textContent=need;
-      const list=$('#selectList'); list.innerHTML='';
-      players.forEach(p=>{
-        const selected=(prefs.selected||[]).includes(p.id);
-        const row=document.createElement('div'); row.className='row';
-        row.innerHTML=`
-          <div style="font-weight:600">${p.nombre}</div>
-          <div>
-            <span class="badge">O${p.overall}</span>
-            <span class="badge">A${p.ataque}</span>
-            <span class="badge">D${p.defensa}</span>
-            <span class="badge">GK${p.arquero}</span>
-          </div>
-          <div class="flex right">
-            <button class="btn ${selected?'pri':''}" data-act="toggle">${selected?'Incluido':'Incluir'}</button>
-          </div>`;
-        row.querySelector('[data-act="toggle"]').onclick=()=>{
-          const set=new Set(prefs.selected||[]);
-          if(set.has(p.id)) set.delete(p.id); else set.add(p.id);
-          prefs.selected=[...set]; savePrefs(); updateSelCount(); renderSelect();
-        };
-        list.appendChild(row);
-      });
-      updateSelCount();
-    }
-    function updateSelCount(){
-      const c=(prefs.selected||[]).length; $('#selCount').textContent=c;
-    }
-    function syncSelected(){
-      const ids=new Set(players.map(p=>p.id));
-      prefs.selected=(prefs.selected||[]).filter(id=>ids.has(id));
-      savePrefs();
-    }
-
-    // --- Balanceo ---
-    const sum=(arr,k)=>arr.reduce((a,p)=>a+(p[k]||0),0);
-    function costSplit(A,B){
-      const metrics=['overall','ataque','defensa','arquero','resistencia'];
-      let diff=0; metrics.forEach(m=>{ const d=sum(A,m)-sum(B,m); diff+=d*d; });
-      const roleOf=(p)=>{
-        const sARQ=p.arquero*1.3, sDEF=p.defensa, sMED=(p.overall+p.resistencia)/2, sDEL=p.ataque;
-        const arr=[{r:'ARQ',s:sARQ},{r:'DEF',s:sDEF},{r:'MED',s:sMED},{r:'DEL',s:sDEL}].sort((a,b)=>b.s-a.s);
-        return arr[0].r;
-      };
-      const count=(T)=>T.reduce((m,p)=>{const r=roleOf(p); m[r]=(m[r]||0)+1; return m;},{});
-      const roles=['ARQ','DEF','MED','DEL'];
-      const a=count(A), b=count(B);
-      let rdiff=0; roles.forEach(r=>{ const d=(a[r]||0)-(b[r]||0); rdiff+=d*d; });
-      rdiff*=2.5; const gk=Math.abs((a.ARQ||0)-(b.ARQ||0))*6;
-      return diff+rdiff+gk;
-    }
-    function* combinations(n,k){
-      const idx=Array.from({length:k},(_,i)=>i); const last=n-1;
-      while(true){
-        yield idx.slice();
-        let i=k-1; while(i>=0 && idx[i]===last-(k-1-i)) i--; if(i<0) break; idx[i]++; for(let j=i+1;j<k;j++) idx[j]=idx[j-1]+1;
-      }
-    }
-    function bestSplit(players){
-      const n=players.length; if(n%2!==0) return null; const k=n/2;
-      let best=null; const others=players.slice(1); const m=others.length; const choose=k-1;
-      for(const comb of combinations(m,choose)){
-        const setA=new Set([0,...comb.map(i=>i+1)]);
-        const A=players.filter((_,i)=>setA.has(i));
-        const B=players.filter((_,i)=>!setA.has(i));
-        const c=costSplit(A,B); if(!best||c<best.cost) best={A,B,cost:c};
-      }
-      return best;
-    }
-
-    // --- Form ---
-    let editing=null;
-    function openForm(p){
-      editing = p ? {...p} : empty();
-      $('#f_nombre').value = editing.nombre||'';
-      $('#f_overall').value = editing.overall;
-      $('#f_ataque').value = editing.ataque;
-      $('#f_defensa').value = editing.defensa;
-      $('#f_arquero').value = editing.arquero;
-      $('#f_resistencia').value = editing.resistencia;
-      $('#f_pie').value = editing.pie;
-      $('#f_pos').value = editing.posicion;
-      $('#dlg').showModal();
-    }
-    function readForm(){
-      editing.nombre = $('#f_nombre').value.trim(); if(!editing.nombre){ alert('Poné un nombre'); return null; }
-      editing.overall = clamp($('#f_overall').value,1,10);
-      editing.ataque = clamp($('#f_ataque').value,1,10);
-      editing.defensa = clamp($('#f_defensa').value,1,10);
-      editing.arquero = clamp($('#f_arquero').value,0,10);
-      editing.resistencia = clamp($('#f_resistencia').value,1,10);
-      editing.pie = $('#f_pie').value; editing.posicion = $('#f_pos').value; return editing;
-    }
-    $('#playerForm').addEventListener('close',()=>{ /* noop */ });
-    $('#saveBtn').addEventListener('click',(e)=>{ e.preventDefault(); const data=readForm(); if(!data) return; const i=players.findIndex(x=>x.id===data.id); if(i>=0) players[i]=data; else players.push(data); save(); $('#dlg').close(); renderAll(); });
-    $('#addBtn').onclick=()=>openForm(null);
-
-    // --- Ejemplo ---
-    $('#exampleBtn').onclick=()=>{
-      if(players.length && !confirm('Esto reemplazará tu lista. ¿Continuar?')) return;
-      const sample=[["Nico",7,7,6,2,7,"Derecho","MED"],["Ari",6,7,5,1,6,"Derecho","DEL"],["Lucho",7,6,7,2,6,"Izquierdo","DEF"],["Seba",8,8,6,1,8,"Derecho","DEL"],["Gime",6,5,7,3,7,"Ambidiestro","DEF"],["Mai",5,5,5,5,6,"Derecho","ARQ"],["Caro",6,6,6,2,7,"Izquierdo","MED"],["Vero",5,6,5,1,6,"Derecho","DEL"],["Andrea",6,5,6,2,6,"Derecho","MED"],["Luciano",7,7,6,1,7,"Izquierdo","DEL"],["Cristian",6,5,6,1,7,"Derecho","DEF"],["Flor",5,5,5,7,6,"Derecho","ARQ"],["Clau",6,6,6,2,6,"Ambidiestro","MED"],["Sabrina",6,7,5,1,6,"Derecho","DEL"]].map(([n,o,a,d,gk,res,pie,pos])=>({id:crypto.randomUUID(),nombre:n,overall:o,ataque:a,defensa:d,arquero:gk,resistencia:res,pie, posicion:pos}));
-      players=sample; save(); prefs.selected=[]; savePrefs(); renderAll();
-    };
-
-    // --- Partido UI ---
-    $('#sizeSel').addEventListener('change',()=>{ prefs.size=Number($('#sizeSel').value); savePrefs(); $('#selNeed').textContent=prefs.size*2; updateSelCount(); });
-    $('#clearTeams').onclick=()=>{ $('#result').style.display='none'; };
-    $('#makeTeams').onclick=()=>{
-      const need=prefs.size*2; const ids=prefs.selected||[]; if(ids.length!==need){ alert('Debés seleccionar exactamente '+need+' jugadores'); return; }
-      const selected = players.filter(p=>ids.includes(p.id));
-      const best=bestSplit(selected); if(!best){ alert('No se pudo generar el split'); return; }
-      const paint=(el,title,team)=>{
-        const s=(k)=>team.reduce((a,p)=>a+(p[k]||0),0).toFixed(1);
-        el.innerHTML=`<h3>${title}</h3>
-          <div class="flex" style="gap:8px;margin:6px 0 10px">
-            <div class="stat"><div class="small muted">Ovr</div><div><b>${s('overall')}</b></div></div>
-            <div class="stat"><div class="small muted">Atq</div><div><b>${s('ataque')}</b></div></div>
-            <div class="stat"><div class="small muted">Def</div><div><b>${s('defensa')}</b></div></div>
-            <div class="stat"><div class="small muted">ARQ</div><div><b>${s('arquero')}</b></div></div>
-          </div>
-          <div class="list">${team.map(p=>`<div class="row" style="grid-template-columns:1fr auto"><div><b>${p.nombre}</b></div><div class="muted small">O${p.overall} · A${p.ataque} · D${p.defensa} · GK${p.arquero}</div></div>`).join('')}</div>`;
-      };
-      paint($('#teamA'),'Equipo A',best.A); paint($('#teamB'),'Equipo B',best.B);
-      $('#cost').textContent=best.cost.toFixed(2); $('#result').style.display='grid';
-    };
-
-    // --- Backup ---
-    $('#exportBtn').onclick=()=>{
-      const blob=new Blob([JSON.stringify(players,null,2)],{type:'application/json'});
-      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='jugadores.json'; a.click(); URL.revokeObjectURL(url);
-    };
-    $('#importInp').onchange=(e)=>{
-      const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(String(r.result)); if(Array.isArray(data)){ players=data.map(p=>({ ...empty(), ...p, id:p.id||crypto.randomUUID()})); save(); syncSelected(); renderAll(); alert('Importado ok'); } else alert('Archivo inválido'); }catch{ alert('No se pudo leer el JSON'); } }; r.readAsText(f);
-    };
-
-    // --- Init ---
-    function renderAll(){ renderPlayers(); renderSelect(); }
-    renderAll(); showTab('jug');
-  </script>
-
-  <!-- Registro de Service Worker para PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {/* opcional */});
-      });
-    }
-  </script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
 </body>
 </html>
