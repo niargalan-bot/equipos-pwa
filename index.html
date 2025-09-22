@@ -16,7 +16,7 @@
     .btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
     .btn.dng{color:#b91c1c;border-color:#fecaca;background:#fff}
     .btn.full{width:100%}
-    .wrap{max-width:920px;margin:0 auto;padding:16px}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
     .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
     .row{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:14px}
     .row:hover{background:#f9fafb}
@@ -41,6 +41,25 @@
       .row{grid-template-columns:1fr;align-items:start}
       header h1{font-size:18px}
     }
+
+    /* Canchita */
+    .pitch-wrap { position: relative; width: 100%; }
+    .pitch { position: relative; width: 100%; background: #0b7a3b; border-radius: 12px; overflow: hidden; }
+    .pitch::before { content: ""; display: block; padding-top: 60%; } /* 5:3 aprox. */
+    .midline { position:absolute; top:0; bottom:0; left:50%; transform: translateX(-50%); border-left:2px solid rgba(255,255,255,.85); }
+    .circle { position:absolute; width: 18%; height: 18%; border:2px solid rgba(255,255,255,.85); border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    .half { position:absolute; top:0; bottom:0; width:50%; }
+    .half.left { left:0; } .half.right { right:0; }
+    .box { position:absolute; top:25%; width:18%; height:50%; border:2px solid rgba(255,255,255,.85); }
+    .half.left .box { left:0; } .half.right .box { right:0; }
+    .goal-left, .goal-right { position:absolute; top:45%; width:1.5%; height:10%; background:rgba(255,255,255,.9); }
+    .goal-left { left:0; } .goal-right { right:0; }
+    .player { position:absolute; transform: translate(-50%, -50%); background:#111827; color:#fff; padding:6px 8px; border-radius:999px; font-size:12px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.25) }
+    .player .mini { opacity:.85; font-size:11px; margin-left:6px; }
+    .player.red { background:#dc2626; } .player.blue { background:#2563eb; }
+    .teams-head { display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:center; margin-top:8px; }
+    .tag { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; font-weight:600; }
+    .tag.red { background:#fee2e2; color:#7f1d1d; } .tag.blue{ background:#dbeafe; color:#1e3a8a; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 </head>
@@ -55,6 +74,7 @@
   </header>
   <div class="wrap">
 
+    <!-- Jugadores -->
     <section id="tab-jug" class="grid">
       <div class="flex right">
         <button class="btn pri" id="addBtn">+ Agregar</button>
@@ -66,6 +86,7 @@
       </div>
     </section>
 
+    <!-- Partido -->
     <section id="tab-par" class="grid" style="display:none">
       <div class="card" style="padding:12px">
         <div class="grid3">
@@ -90,13 +111,36 @@
       <div class="card" style="padding:12px">
         <div id="selectList" class="list"></div>
       </div>
+
       <div id="result" class="grid" style="display:none">
-        <div class="card team" id="teamA"></div>
-        <div class="card team" id="teamB"></div>
-        <div class="muted small">Costo de desequilibrio: <b id="cost"></b> (menor es mejor)</div>
+        <div class="grid2">
+          <div class="card team" id="teamA"></div>
+          <div class="card team" id="teamB"></div>
+        </div>
+        <div class="muted small" style="margin-top:-6px">Costo de desequilibrio: <b id="cost"></b> (menor es mejor)</div>
+
+        <!-- Canchita -->
+        <div class="card" style="padding:12px">
+          <div class="teams-head">
+            <div class="tag red">Equipo A</div>
+            <div class="tag blue" style="justify-self:end">Equipo B</div>
+          </div>
+          <div class="pitch-wrap" style="margin-top:8px">
+            <div id="pitch" class="pitch">
+              <div class="half left"><div class="box"></div></div>
+              <div class="half right"><div class="box"></div></div>
+              <div class="midline"></div>
+              <div class="circle"></div>
+              <div class="goal-left"></div>
+              <div class="goal-right"></div>
+            </div>
+          </div>
+          <div class="muted small" style="margin-top:8px">Ubicación por bandas (ARQ-DEF-MED-DEL) y lados. La vertical se distribuye automáticamente.</div>
+        </div>
       </div>
     </section>
 
+    <!-- Backup -->
     <section id="tab-bak" class="grid" style="display:none">
       <div class="card" style="padding:12px">
         <div class="grid">
@@ -121,6 +165,7 @@
 
   </div>
 
+  <!-- Modal Jugador -->
   <dialog id="dlg" style="max-width:560px;width:92%;border:none;border-radius:20px;padding:0;">
     <form id="playerForm" method="dialog">
       <div class="card" style="border:none;border-radius:20px">
@@ -155,13 +200,17 @@
   </dialog>
 
   <script>
-    const KEY='equipo_balanceado_html_v2';
-    const PREF='equipo_balanceado_prefs_v2';
+    // --- Estado & util ---
+    const KEY='equipo_balanceado_html_v3';
+    const PREF='equipo_balanceado_prefs_v3';
     const $=sel=>document.querySelector(sel);
     const $$=sel=>Array.from(document.querySelectorAll(sel));
     const clamp=(n,min,max)=>Math.max(min,Math.min(max,Number(n)||0));
     const empty=()=>({id:crypto.randomUUID(),nombre:'',overall:6,ataque:6,defensa:6,arquero:3,resistencia:6,pie:'Derecho',posicion:'MED'});
-    const computeOverall = (p) => Math.round(((Number(p.ataque)||0 + Number(p.defensa)||0 + Number(p.arquero)||0 + Number(p.resistencia)||0)/4)*10)/10;
+
+    // Overall automático
+    const computeOverall = (p) =>
+      Math.round(((Number(p.ataque)||0 + Number(p.defensa)||0 + Number(p.arquero)||0 + Number(p.resistencia)||0)/4)*10)/10;
     const recomputeAll = () => { players = players.map(p => ({...p, overall: computeOverall(p)})); save(); };
 
     let players = JSON.parse(localStorage.getItem(KEY)||'[]');
@@ -169,6 +218,7 @@
     const save=()=>{localStorage.setItem(KEY,JSON.stringify(players));};
     const savePrefs=()=>{localStorage.setItem(PREF,JSON.stringify(prefs));};
 
+    // --- Tabs ---
     const showTab = (id)=>{
       $('#tab-jug').style.display = id==='jug'?'grid':'none';
       $('#tab-par').style.display = id==='par'?'grid':'none';
@@ -177,6 +227,7 @@
     };
     $$('.tabs .btn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 
+    // --- Render jugadores ---
     function renderPlayers(){
       const list=$('#playersList');
       list.innerHTML='';
@@ -205,6 +256,7 @@
       });
     }
 
+    // --- Render selección para partido ---
     function renderSelect(){
       $('#sizeSel').value = prefs.size || 5;
       const need=prefs.size*2; $('#selNeed').textContent=need;
@@ -232,18 +284,23 @@
       });
       updateSelCount();
     }
-    function updateSelCount(){ const c=(prefs.selected||[]).length; $('#selCount').textContent=c; }
+    function updateSelCount(){
+      const c=(prefs.selected||[]).length; $('#selCount').textContent=c;
+    }
     function syncSelected(){
       const ids=new Set(players.map(p=>p.id));
       prefs.selected=(prefs.selected||[]).filter(id=>ids.has(id));
       savePrefs();
     }
 
+    // --- Balanceo ---
     const sum=(arr,k)=>arr.reduce((a,p)=>a+(p[k]||0),0);
     function costSplit(A,B){
       const metrics=['overall','ataque','defensa','arquero','resistencia'];
       let diff=0; metrics.forEach(m=>{ const d=sum(A,m)-sum(B,m); diff+=d*d; });
       const roleOf=(p)=>{
+        // Preferencia de posición si existe, si no, inferir por stats
+        if (p.posicion) return p.posicion;
         const sARQ=p.arquero*1.3, sDEF=p.defensa, sMED=(p.overall+p.resistencia)/2, sDEL=p.ataque;
         const arr=[{r:'ARQ',s:sARQ},{r:'DEF',s:sDEF},{r:'MED',s:sMED},{r:'DEL',s:sDEL}].sort((a,b)=>b.s-a.s);
         return arr[0].r;
@@ -274,6 +331,43 @@
       return best;
     }
 
+    // --- Canchita: helpers de layout ---
+    const bands = ['ARQ','DEF','MED','DEL'];
+    const xBySide = {
+      left:  { ARQ:  8, DEF: 25, MED: 45, DEL: 65 },
+      right: { ARQ: 92, DEF: 75, MED: 55, DEL: 35 },
+    };
+    function distributeY(n, idx){ if(n===1) return 50; const top=12, bottom=88; return top + idx*((bottom-top)/(n-1)); }
+    function roleOfForPitch(p){
+      if (p.posicion) return p.posicion;
+      const sARQ=p.arquero*1.3, sDEF=p.defensa, sMED=(p.overall+p.resistencia)/2, sDEL=p.ataque;
+      const arr=[{r:'ARQ',s:sARQ},{r:'DEF',s:sDEF},{r:'MED',s:sMED},{r:'DEL',s:sDEL}].sort((a,b)=>b.s-a.s);
+      return arr[0].r;
+    }
+    function renderTeamsOnPitch(pitch, A, B){
+      pitch.querySelectorAll('.player').forEach(n=>n.remove());
+      const prepare=(team)=>team.map(p=>({...p, rol: roleOfForPitch(p)}));
+      placeSide(pitch, prepare(A), 'left','red');
+      placeSide(pitch, prepare(B), 'right','blue');
+    }
+    function placeSide(pitch, players, side, color){
+      const grouped = Object.fromEntries(bands.map(b=>[b,[]]));
+      players.forEach(p=>grouped[p.rol]?.push(p));
+      bands.forEach(b=>{
+        const arr = grouped[b];
+        arr.forEach((p,i)=>{
+          const x=xBySide[side][b], y=distributeY(arr.length,i);
+          const dot=document.createElement('div');
+          dot.className='player '+color;
+          dot.style.left=x+'%';
+          dot.style.top=y+'%';
+          dot.innerHTML=`${p.nombre} <span class="mini">${b}</span>`;
+          pitch.appendChild(dot);
+        });
+      });
+    }
+
+    // --- Form ---
     let editing=null;
     function openForm(p){
       editing = p ? {...p} : empty();
@@ -326,12 +420,14 @@
     });
     $('#addBtn').onclick=()=>openForm(null);
 
+    // --- Ejemplo ---
     $('#exampleBtn').onclick=()=>{
       if(players.length && !confirm('Esto reemplazará tu lista. ¿Continuar?')) return;
       const sample=[["Nico",7,6,2,7,"Derecho","MED"],["Ari",6,5,1,6,"Derecho","DEL"],["Lucho",6,7,2,6,"Izquierdo","DEF"],["Seba",8,6,1,8,"Derecho","DEL"],["Gime",5,7,3,7,"Ambidiestro","DEF"],["Mai",5,5,5,6,"Derecho","ARQ"],["Caro",6,6,2,7,"Izquierdo","MED"],["Vero",6,5,1,6,"Derecho","DEL"],["Andrea",5,6,2,6,"Derecho","MED"],["Luciano",7,6,1,7,"Izquierdo","DEL"],["Cristian",5,6,1,7,"Derecho","DEF"],["Flor",5,5,7,6,"Derecho","ARQ"],["Clau",6,6,2,6,"Ambidiestro","MED"],["Sabrina",7,5,1,6,"Derecho","DEL"]].map(([n,a,d,gk,res,pie,pos])=>({id:crypto.randomUUID(),nombre:n,ataque:a,defensa:d,arquero:gk,resistencia:res,pie, posicion:pos}));
       players=sample; recomputeAll(); save(); prefs.selected=[]; savePrefs(); renderAll();
     };
 
+    // --- Partido UI ---
     $('#sizeSel').addEventListener('change',()=>{ prefs.size=Number($('#sizeSel').value); savePrefs(); $('#selNeed').textContent=prefs.size*2; updateSelCount(); });
     $('#clearTeams').onclick=()=>{ $('#result').style.display='none'; };
     $('#makeTeams').onclick=()=>{
@@ -350,9 +446,13 @@
           <div class="list">${team.map(p=>`<div class="row" style="grid-template-columns:1fr auto"><div><b>${p.nombre}</b></div><div class="muted small">O${p.overall} · A${p.ataque} · D${p.defensa} · GK${p.arquero}</div></div>`).join('')}</div>`;
       };
       paint($('#teamA'),'Equipo A',best.A); paint($('#teamB'),'Equipo B',best.B);
-      $('#cost').textContent=best.cost.toFixed(2); $('#result').style.display='grid';
+      $('#cost').textContent=best.cost.toFixed(2);
+      // Pintar canchita
+      renderTeamsOnPitch(document.getElementById('pitch'), best.A, best.B);
+      $('#result').style.display='grid';
     };
 
+    // --- Backup: JSON export/import ---
     $('#exportBtn').onclick=()=>{
       const blob=new Blob([JSON.stringify(players,null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='jugadores.json'; a.click(); URL.revokeObjectURL(url);
@@ -363,9 +463,9 @@
       r.readAsText(f);
     };
 
+    // --- Plantilla CSV e importación Excel/CSV ---
     const sampleCSV='Nombre,Ataque,Defensa,Arquero,Resistencia,Pie,Posicion\nNico,7,6,2,7,Derecho,MED\nAri,6,5,1,6,Derecho,DEL\nLucho,6,7,2,6,Izquierdo,DEF\n';
     $('#downloadTemplate').href = URL.createObjectURL(new Blob([sampleCSV],{type:'text/csv'}));
-
     $('#excelInp').addEventListener('change', async (e) => {
       const file = e.target.files?.[0]; if(!file) return;
       const ext = (file.name.split('.').pop()||'').toLowerCase();
@@ -417,11 +517,13 @@
       }
     });
 
+    // --- Init ---
     function renderAll(){ renderPlayers(); renderSelect(); }
     recomputeAll();
     renderAll(); showTab('jug');
   </script>
 
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
